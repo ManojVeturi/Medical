@@ -7,25 +7,63 @@ import { useLocation, Link } from "wouter";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { Stethoscope, User } from "lucide-react";
+import { useAuth } from "@/lib/auth";
 
 export default function Login() {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, register, isLoading } = useAuth();
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [specialty, setSpecialty] = useState("");
+  const [phone, setPhone] = useState("");
   
-  const isRegister = location === "/auth/register";
+  const isRegisterMode = location === "/auth/register";
 
-  const handleAuth = (role: string) => {
-    setIsLoading(true);
-    // Simulate network delay
-    setTimeout(() => {
-      setIsLoading(false);
+  const handlePatientAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (isRegisterMode) {
+        await register(email, password, "patient", `${firstName} ${lastName}`, undefined, phone);
+      } else {
+        await login(email, password, "patient");
+      }
       toast({
-        title: isRegister ? "Account Created" : "Welcome back!",
-        description: isRegister ? "Your account has been created successfully." : "You have successfully logged in.",
+        title: isRegisterMode ? "Account Created" : "Welcome back!",
+        description: isRegisterMode ? "Your account has been created successfully." : "You have successfully logged in.",
       });
-      setLocation(role === "doctor" ? "/dashboard/doctor" : "/dashboard/patient");
-    }, 1000);
+      setLocation("/dashboard/patient");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Authentication failed",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDoctorAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      if (isRegisterMode) {
+        await register(email, password, "doctor", `${firstName} ${lastName}`, specialty, phone);
+      } else {
+        await login(email, password, "doctor");
+      }
+      toast({
+        title: isRegisterMode ? "Account Created" : "Welcome back!",
+        description: isRegisterMode ? "Your account has been created successfully." : "You have successfully logged in.",
+      });
+      setLocation("/dashboard/doctor");
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Authentication failed",
+        variant: "destructive",
+      });
+    }
   };
 
   return (
@@ -42,10 +80,10 @@ export default function Login() {
             <span className="text-primary-foreground font-bold text-2xl">+</span>
           </div>
           <CardTitle className="text-2xl font-bold tracking-tight">
-            {isRegister ? "Create an Account" : "MediCare Connect"}
+            {isRegisterMode ? "Create an Account" : "MediCare Connect"}
           </CardTitle>
           <CardDescription>
-            {isRegister ? "Enter your details to get started" : "Enter your credentials to access your account"}
+            {isRegisterMode ? "Enter your details to get started" : "Enter your credentials to access your account"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -56,16 +94,16 @@ export default function Login() {
             </TabsList>
             
             <TabsContent value="patient">
-              <form onSubmit={(e) => { e.preventDefault(); handleAuth("patient"); }} className="space-y-4">
-                {isRegister && (
+              <form onSubmit={handlePatientAuth} className="space-y-4">
+                {isRegisterMode && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="fname-patient">First Name</Label>
-                      <Input id="fname-patient" placeholder="Alex" required />
+                      <Input id="fname-patient" placeholder="Alex" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="lname-patient">Last Name</Label>
-                      <Input id="lname-patient" placeholder="Morgan" required />
+                      <Input id="lname-patient" placeholder="Morgan" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
                     </div>
                   </div>
                 )}
@@ -73,33 +111,39 @@ export default function Login() {
                   <Label htmlFor="email-patient">Email</Label>
                   <div className="relative">
                     <User className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input id="email-patient" type="email" placeholder="alex@example.com" className="pl-9" required />
+                    <Input id="email-patient" type="email" placeholder="alex@example.com" className="pl-9" value={email} onChange={(e) => setEmail(e.target.value)} required />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password-patient">Password</Label>
-                  <Input id="password-patient" type="password" required />
+                  <Input id="password-patient" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
-                <Button className="w-full" type="submit" disabled={isLoading}>
+                {isRegisterMode && (
+                  <div className="space-y-2">
+                    <Label htmlFor="phone-patient">Phone (optional)</Label>
+                    <Input id="phone-patient" type="tel" placeholder="+1 (555) 000-0000" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                  </div>
+                )}
+                <Button className="w-full" type="submit" disabled={isLoading} data-testid="button-submit-patient">
                   {isLoading 
-                    ? (isRegister ? "Creating account..." : "Signing in...") 
-                    : (isRegister ? "Create Patient Account" : "Sign in as Patient")
+                    ? (isRegisterMode ? "Creating account..." : "Signing in...") 
+                    : (isRegisterMode ? "Create Patient Account" : "Sign in as Patient")
                   }
                 </Button>
               </form>
             </TabsContent>
             
             <TabsContent value="doctor">
-              <form onSubmit={(e) => { e.preventDefault(); handleAuth("doctor"); }} className="space-y-4">
-                 {isRegister && (
+              <form onSubmit={handleDoctorAuth} className="space-y-4">
+                 {isRegisterMode && (
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="fname-doctor">First Name</Label>
-                      <Input id="fname-doctor" placeholder="Sarah" required />
+                      <Input id="fname-doctor" placeholder="Sarah" value={firstName} onChange={(e) => setFirstName(e.target.value)} required />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="lname-doctor">Last Name</Label>
-                      <Input id="lname-doctor" placeholder="Jenkins" required />
+                      <Input id="lname-doctor" placeholder="Jenkins" value={lastName} onChange={(e) => setLastName(e.target.value)} required />
                     </div>
                   </div>
                 )}
@@ -107,23 +151,29 @@ export default function Login() {
                   <Label htmlFor="email-doctor">Work Email</Label>
                   <div className="relative">
                     <Stethoscope className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                    <Input id="email-doctor" type="email" placeholder="dr.smith@hospital.com" className="pl-9" required />
+                    <Input id="email-doctor" type="email" placeholder="dr.smith@hospital.com" className="pl-9" value={email} onChange={(e) => setEmail(e.target.value)} required />
                   </div>
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password-doctor">Password</Label>
-                  <Input id="password-doctor" type="password" required />
+                  <Input id="password-doctor" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
-                 {isRegister && (
+                 {isRegisterMode && (
                   <div className="space-y-2">
                     <Label htmlFor="specialty">Specialty</Label>
-                    <Input id="specialty" placeholder="Cardiology" required />
+                    <Input id="specialty" placeholder="Cardiology" value={specialty} onChange={(e) => setSpecialty(e.target.value)} required />
                   </div>
                 )}
-                <Button className="w-full" type="submit" disabled={isLoading}>
+                {isRegisterMode && (
+                  <div className="space-y-2">
+                    <Label htmlFor="phone-doctor">Phone (optional)</Label>
+                    <Input id="phone-doctor" type="tel" placeholder="+1 (555) 000-0000" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                  </div>
+                )}
+                <Button className="w-full" type="submit" disabled={isLoading} data-testid="button-submit-doctor">
                   {isLoading 
-                    ? (isRegister ? "Creating account..." : "Signing in...") 
-                    : (isRegister ? "Create Doctor Account" : "Sign in as Doctor")
+                    ? (isRegisterMode ? "Creating account..." : "Signing in...") 
+                    : (isRegisterMode ? "Create Doctor Account" : "Sign in as Doctor")
                   }
                 </Button>
               </form>
@@ -132,9 +182,9 @@ export default function Login() {
         </CardContent>
         <CardFooter className="flex flex-col space-y-4 text-center text-sm text-muted-foreground">
           <div>
-            {isRegister ? "Already have an account? " : "Don't have an account? "}
-            <Link href={isRegister ? "/auth/login" : "/auth/register"} className="text-primary hover:underline font-medium">
-              {isRegister ? "Sign in" : "Register"}
+            {isRegisterMode ? "Already have an account? " : "Don't have an account? "}
+            <Link href={isRegisterMode ? "/auth/login" : "/auth/register"} className="text-primary hover:underline font-medium">
+              {isRegisterMode ? "Sign in" : "Register"}
             </Link>
           </div>
           <Link href="/" className="text-xs hover:text-foreground">Back to Home</Link>

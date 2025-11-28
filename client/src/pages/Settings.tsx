@@ -4,17 +4,42 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Bell, Lock, User, Moon, Globe } from "lucide-react";
+import { Bell, Lock, User, Moon, Globe, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
+import { useLocation } from "wouter";
+import { useState } from "react";
 
 export default function Settings() {
   const { toast } = useToast();
+  const { user, logout } = useAuth();
+  const [, setLocation] = useLocation();
+  const [firstName, setFirstName] = useState(user?.fullName.split(" ")[0] || "");
+  const [lastName, setLastName] = useState(user?.fullName.split(" ")[1] || "");
+  const [email, setEmail] = useState(user?.email || "");
 
   const handleSave = () => {
+    if (!firstName || !lastName) {
+      toast({
+        title: "Error",
+        description: "Please fill in all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
     toast({
       title: "Settings Saved",
       description: "Your preferences have been updated.",
     });
+  };
+
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logged Out",
+      description: "You have been successfully logged out.",
+    });
+    setLocation("/");
   };
 
   return (
@@ -36,20 +61,20 @@ export default function Settings() {
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>First Name</Label>
-                  <Input defaultValue="Alex" />
+                  <Label data-testid="label-first-name">First Name</Label>
+                  <Input data-testid="input-first-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Last Name</Label>
-                  <Input defaultValue="Morgan" />
+                  <Label data-testid="label-last-name">Last Name</Label>
+                  <Input data-testid="input-last-name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input defaultValue="alex.morgan@example.com" />
+                  <Label data-testid="label-email">Email</Label>
+                  <Input data-testid="input-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Phone</Label>
-                  <Input defaultValue="+1 (555) 123-4567" />
+                  <Label data-testid="label-role">Account Type</Label>
+                  <Input disabled value={user?.role === "patient" ? "Patient" : "Doctor"} className="bg-muted" />
                 </div>
               </div>
             </CardContent>
@@ -86,9 +111,24 @@ export default function Settings() {
               </div>
             </CardContent>
           </Card>
+
+          <Card className="border-red-200 bg-red-50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-red-900">
+                <LogOut className="h-5 w-5" /> Sign Out
+              </CardTitle>
+              <CardDescription className="text-red-800">Securely end your session.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={handleLogout} variant="destructive" className="w-full md:w-auto" data-testid="button-logout">
+                Sign Out
+              </Button>
+            </CardContent>
+          </Card>
           
-          <div className="flex justify-end">
-            <Button onClick={handleSave} size="lg">Save Changes</Button>
+          <div className="flex justify-end gap-4">
+            <Button variant="outline" onClick={() => setLocation(user?.role === "patient" ? "/dashboard/patient" : "/dashboard/doctor")} data-testid="button-cancel">Cancel</Button>
+            <Button onClick={handleSave} size="lg" data-testid="button-save">Save Changes</Button>
           </div>
         </div>
       </div>

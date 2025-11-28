@@ -8,15 +8,61 @@ import { Bell, Lock, User, Moon, Globe, LogOut } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
 import { useLocation } from "wouter";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getPatientData } from "@/lib/api";
 
 export default function Settings() {
   const { toast } = useToast();
   const { user, logout } = useAuth();
   const [, setLocation] = useLocation();
-  const [firstName, setFirstName] = useState(user?.fullName.split(" ")[0] || "");
-  const [lastName, setLastName] = useState(user?.fullName.split(" ")[1] || "");
-  const [email, setEmail] = useState(user?.email || "");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
+  const [bloodType, setBloodType] = useState("");
+  const [address, setAddress] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) {
+      setLocation("/auth/login");
+      return;
+    }
+
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const patientId = (user as any).patientId || user.id;
+        const patientData = await getPatientData(patientId);
+        
+        // Set user info
+        const nameParts = user.fullName.split(" ");
+        setFirstName(nameParts[0] || "");
+        setLastName(nameParts.slice(1).join(" ") || "");
+        setEmail(user.email);
+        
+        // Set patient details
+        if (patientData) {
+          setPhone(patientData.phone || "");
+          setDateOfBirth(patientData.dateOfBirth || "");
+          setBloodType(patientData.bloodType || "");
+          setAddress(patientData.address || "");
+        }
+      } catch (err) {
+        console.error("Error loading patient data:", err);
+        // Set fallback values
+        const nameParts = user.fullName.split(" ");
+        setFirstName(nameParts[0] || "");
+        setLastName(nameParts.slice(1).join(" ") || "");
+        setEmail(user.email);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [user, setLocation]);
 
   const handleSave = () => {
     if (!firstName || !lastName) {
@@ -59,24 +105,44 @@ export default function Settings() {
               <CardDescription>Update your personal details.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label data-testid="label-first-name">First Name</Label>
-                  <Input data-testid="input-first-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+              {loading ? (
+                <div className="text-center py-8 text-muted-foreground">Loading profile...</div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label data-testid="label-first-name">First Name</Label>
+                    <Input data-testid="input-first-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} placeholder="First name" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label data-testid="label-last-name">Last Name</Label>
+                    <Input data-testid="input-last-name" value={lastName} onChange={(e) => setLastName(e.target.value)} placeholder="Last name" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label data-testid="label-email">Email</Label>
+                    <Input data-testid="input-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label data-testid="label-role">Account Type</Label>
+                    <Input disabled value={user?.role === "patient" ? "Patient" : "Doctor"} className="bg-muted" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Phone</Label>
+                    <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 (555) 000-0000" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Date of Birth</Label>
+                    <Input type="date" value={dateOfBirth} onChange={(e) => setDateOfBirth(e.target.value)} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Blood Type</Label>
+                    <Input value={bloodType} onChange={(e) => setBloodType(e.target.value)} placeholder="O+" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Address</Label>
+                    <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street address" />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label data-testid="label-last-name">Last Name</Label>
-                  <Input data-testid="input-last-name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label data-testid="label-email">Email</Label>
-                  <Input data-testid="input-email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-                </div>
-                <div className="space-y-2">
-                  <Label data-testid="label-role">Account Type</Label>
-                  <Input disabled value={user?.role === "patient" ? "Patient" : "Doctor"} className="bg-muted" />
-                </div>
-              </div>
+              )}
             </CardContent>
           </Card>
 

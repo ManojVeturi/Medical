@@ -55,7 +55,7 @@ export default function Appointments() {
         toast({ title: "Error", description: "Please fill all fields", variant: "destructive" });
         return;
       }
-      const patientId = (user as any).patientId || user.id;
+      const patientId = (user as any)?.patientId || user?.id;
       await bookAppointment({
         patientId,
         doctorId: selectedDoctor,

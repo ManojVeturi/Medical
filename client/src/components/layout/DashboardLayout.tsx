@@ -16,6 +16,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
 
 import { 
   Dialog, 
@@ -35,9 +36,19 @@ interface DashboardLayoutProps {
 export function DashboardLayout({ children, role = "patient" }: DashboardLayoutProps) {
   const [location, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user, logout } = useAuth();
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
+  const handleProfile = () => {
+    setLocation("/settings");
+  };
+
+  const handleSettings = () => {
+    setLocation("/settings");
+  };
+
   const handleLogout = () => {
+    logout();
     toast({
       title: "Logged out successfully",
       description: "See you soon!",
@@ -210,11 +221,11 @@ export function DashboardLayout({ children, role = "patient" }: DashboardLayoutP
                   <div className="flex items-center gap-2 text-left">
                     <Avatar className="h-8 w-8 border border-border">
                       <AvatarImage src="https://github.com/shadcn.png" />
-                      <AvatarFallback>JD</AvatarFallback>
+                      <AvatarFallback>{user?.fullName.substring(0, 2).toUpperCase() || "U"}</AvatarFallback>
                     </Avatar>
                     <div className="hidden sm:block">
-                      <p className="text-sm font-medium leading-none">Dr. John Doe</p>
-                      <p className="text-xs text-muted-foreground mt-0.5 capitalize">{role}</p>
+                      <p className="text-sm font-medium leading-none">{user?.fullName || "User"}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5 capitalize">{user?.role || role}</p>
                     </div>
                   </div>
                 </Button>
@@ -222,16 +233,16 @@ export function DashboardLayout({ children, role = "patient" }: DashboardLayoutP
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>My Account</DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem className="cursor-pointer" onClick={handleProfile} data-testid="menu-profile">
                   <User className="mr-2 h-4 w-4" />
                   <span>Profile</span>
                 </DropdownMenuItem>
-                <DropdownMenuItem className="cursor-pointer">
+                <DropdownMenuItem className="cursor-pointer" onClick={handleSettings} data-testid="menu-settings">
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Settings</span>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-destructive cursor-pointer focus:text-destructive" onClick={handleLogout}>
+                <DropdownMenuItem className="text-destructive cursor-pointer focus:text-destructive" onClick={handleLogout} data-testid="menu-logout">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>Log out</span>
                 </DropdownMenuItem>

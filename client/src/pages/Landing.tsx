@@ -137,6 +137,82 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* Testimonials Section */}
+      <section className="py-24 bg-background" id="testimonials">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="text-center max-w-2xl mx-auto mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">Trusted by thousands</h2>
+            <p className="text-muted-foreground text-lg">Hear from patients and doctors who have transformed their healthcare experience.</p>
+          </div>
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="bg-muted/20 p-8 rounded-2xl border border-border/50">
+              <div className="flex gap-1 text-amber-500 mb-4">★★★★★</div>
+              <p className="text-lg italic mb-6">"MediCare has completely changed how I manage my chronic condition. I can share my logs with my doctor instantly."</p>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-blue-100"></div>
+                <div>
+                  <p className="font-bold">Sarah Johnson</p>
+                  <p className="text-sm text-muted-foreground">Patient since 2023</p>
+                </div>
+              </div>
+            </div>
+            <div className="bg-muted/20 p-8 rounded-2xl border border-border/50">
+              <div className="flex gap-1 text-amber-500 mb-4">★★★★★</div>
+              <p className="text-lg italic mb-6">"The streamlined dashboard saves me hours of administrative work every week. I can focus more on patient care."</p>
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-green-100"></div>
+                <div>
+                  <p className="font-bold">Dr. James Wilson</p>
+                  <p className="text-sm text-muted-foreground">Cardiologist</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* For Doctors / Pricing Section */}
+      <section className="py-24 bg-primary text-primary-foreground" id="pricing">
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-6">Empower your medical practice</h2>
+              <p className="text-primary-foreground/80 text-lg mb-8">
+                Join the network of top-tier healthcare providers using MediCare to deliver better patient outcomes.
+              </p>
+              <ul className="space-y-4 mb-8">
+                {[
+                  "Streamlined patient onboarding",
+                  "Integrated telehealth video calls",
+                  "Automated appointment reminders",
+                  "Secure digital prescriptions"
+                ].map((item, i) => (
+                  <li key={i} className="flex items-center gap-3">
+                    <div className="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </div>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <Link href="/auth/register">
+                <Button size="lg" variant="secondary" className="h-12 px-8 font-semibold">
+                  Partner with Us
+                </Button>
+              </Link>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-8 border border-white/20 text-center">
+               <h3 className="text-2xl font-bold mb-2">Professional Plan</h3>
+               <div className="text-4xl font-bold mb-4">$49<span className="text-lg font-normal opacity-80">/mo</span></div>
+               <p className="text-primary-foreground/70 mb-8">Everything you need to run a modern digital clinic.</p>
+               <Button className="w-full bg-white text-primary hover:bg-white/90 font-bold h-12">
+                 Start Free Trial
+               </Button>
+            </div>
+          </div>
+        </div>
+      </section>
       
       {/* Footer */}
       <footer className="mt-auto py-12 border-t border-border bg-card">

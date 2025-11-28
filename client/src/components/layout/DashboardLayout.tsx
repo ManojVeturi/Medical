@@ -17,6 +17,16 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useToast } from "@/hooks/use-toast";
 
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogTrigger 
+} from "@/components/ui/dialog";
+import { Phone, Mail, MessageCircle } from "lucide-react";
+
 interface DashboardLayoutProps {
   children: React.ReactNode;
   role?: "patient" | "doctor";
@@ -94,9 +104,53 @@ export function DashboardLayout({ children, role = "patient" }: DashboardLayoutP
         <div className="bg-sidebar-accent/50 rounded-lg p-4">
           <h4 className="text-xs font-semibold uppercase text-sidebar-foreground/60 mb-2">Need Help?</h4>
           <p className="text-xs text-sidebar-foreground/50 mb-3">Contact support for any technical issues.</p>
-          <Button variant="outline" size="sm" className="w-full text-xs h-8 bg-sidebar">
-            Support
-          </Button>
+          
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm" className="w-full text-xs h-8 bg-sidebar">
+                Support
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Contact Support</DialogTitle>
+                <DialogDescription>
+                  Our team is available 24/7 to assist you with any issues.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => toast({ title: "Calling Support...", description: "Connecting you to the next available agent." })}>
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                    <Phone className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Call Us</h4>
+                    <p className="text-sm text-muted-foreground">+1 (800) 123-4567</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => toast({ title: "Email Client Opened", description: "Drafting a new support ticket." })}>
+                  <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600">
+                    <Mail className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Email Support</h4>
+                    <p className="text-sm text-muted-foreground">help@medicare.com</p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-4 p-4 border rounded-lg hover:bg-muted/50 transition-colors cursor-pointer" onClick={() => setLocation("/messages")}>
+                  <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                    <MessageCircle className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Live Chat</h4>
+                    <p className="text-sm text-muted-foreground">Chat with an agent now</p>
+                  </div>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </div>

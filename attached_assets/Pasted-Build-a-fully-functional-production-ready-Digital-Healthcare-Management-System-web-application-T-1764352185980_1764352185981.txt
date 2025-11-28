@@ -1,0 +1,128 @@
+Build a fully functional, production-ready “Digital Healthcare Management System” web application.
+The goal is to improve doctor-patient communication, track treatment progress efficiently, and organize all health-related information clearly and securely.
+
+🔧 1. Technical Requirements
+Frontend
+
+Use React or Next.js (preferred), fully responsive.
+
+Clean, modern medical UI/UX design.
+
+Pages/screens required:
+
+Patient Dashboard
+
+Doctor Dashboard
+
+Appointment Scheduling
+
+Treatment Progress Timeline
+
+Medical Records Viewer
+
+Messaging/Consultation Chat
+
+Login & Registration (patients + doctors)
+
+Profile Management
+
+Notifications Center
+
+Include charts for health metrics (use Chart.js or similar).
+
+Backend
+
+Use Node.js + Express or Next.js API routes, OR Python Django/FastAPI (developer’s choice).
+
+Include the following modules:
+
+User Authentication (JWT or OAuth)
+
+Role Management (Doctor / Patient)
+
+Patient Health Record Management
+
+Appointment System with availability logic
+
+Secure Messaging System
+
+Treatment Progress Tracking
+
+Audit logs
+
+API should be fully documented.
+
+Database
+
+Use MongoDB, PostgreSQL, or MySQL.
+
+Required tables/collections:
+
+users
+
+medical_records
+
+appointments
+
+messages
+
+treatment_plans
+
+notifications
+
+Security & Privacy
+
+Full HIPAA-style data handling practices.
+
+Encrypted passwords.
+
+Secure API routes.
+
+Role-based access (patients can’t see doctor data and vice versa).
+
+🚀 2. Deployment Requirements
+
+Deploy the complete working site on Vercel, Netlify, or Render (or any automatic deployment platform).
+
+Set up the database on MongoDB Atlas or equivalent.
+
+After deployment, provide the public URL for the working website.
+
+Also provide a GitHub repository link containing all source code (frontend + backend).
+
+📦 3. Deliverables
+
+The final answer must include:
+
+Live Website Link (public URL)
+
+GitHub Repo Link
+
+Installation & run instructions
+
+List of all features implemented
+
+API documentation
+
+Admin login test credentials
+
+Patient login test credentials
+
+🎯 4. Purpose of the System
+
+The application should:
+
+Help doctors track patient progress clearly.
+
+Keep treatment updates organized and accessible.
+
+Provide a simple, secure space for patients to follow their care journey.
+
+Improve clarity, reduce missed updates, and streamline doctor-patient communication.
+
+End of prompt. Generate the complete, finished project and deploy it.
+
+If you'd like, I can also generate:
+✅ A shorter version of the prompt
+✅ A specialized prompt for Replit, Vercel AI, or any specific builder
+✅ A diagram or architecture outline of the system

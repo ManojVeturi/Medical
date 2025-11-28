@@ -1,5 +1,5 @@
-import { drizzle } from "drizzle-orm/neon-serverless";
-import { neon } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/postgres-js";
+import postgres from "postgres";
 import { eq, and, desc } from "drizzle-orm";
 import {
   users,
@@ -25,8 +25,8 @@ import {
   type InsertMessage,
 } from "@shared/schema";
 
-const sql = neon(process.env.DATABASE_URL!);
-const db = drizzle({ client: sql });
+const client = postgres(process.env.DATABASE_URL!);
+const db = drizzle(client);
 
 export interface IStorage {
   // User operations

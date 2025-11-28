@@ -1,6 +1,6 @@
 import { 
   User, Calendar, Activity, MessageSquare, FileText, 
-  Settings, LogOut, Bell, Search, Menu, X, ChevronRight 
+  Settings, LogOut, Bell, Search, Menu, X, ChevronRight, Home 
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
@@ -46,6 +46,7 @@ export function DashboardLayout({ children, role = "patient" }: DashboardLayoutP
   };
 
   const patientLinks = [
+    { icon: Home, label: "Home Page", href: "/" },
     { icon: Activity, label: "Overview", href: "/dashboard/patient" },
     { icon: Calendar, label: "Appointments", href: "/appointments" },
     { icon: FileText, label: "Medical Records", href: "/records" },
@@ -54,6 +55,7 @@ export function DashboardLayout({ children, role = "patient" }: DashboardLayoutP
   ];
 
   const doctorLinks = [
+    { icon: Home, label: "Home Page", href: "/" },
     { icon: Activity, label: "Overview", href: "/dashboard/doctor" },
     { icon: User, label: "Patients", href: "/patients" },
     { icon: Calendar, label: "Schedule", href: "/appointments" },

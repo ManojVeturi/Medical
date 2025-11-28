@@ -3,11 +3,51 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Calendar, Clock, MoreHorizontal, TrendingUp, Activity, Droplets } from "lucide-react";
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { bloodPressureData, appointments, recentActivities } from "@/lib/mockData";
+import { bloodPressureData, recentActivities } from "@/lib/mockData";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { useAuth } from "@/lib/auth";
+import { useEffect, useState } from "react";
+import { getAppointmentsByPatient, getHealthMetrics, getAllDoctors } from "@/lib/api";
+import { useLocation } from "wouter";
 
 export default function PatientDashboard() {
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [healthMetrics, setHealthMetrics] = useState<any[]>([]);
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (!user) {
+      setLocation("/auth/login");
+      return;
+    }
+    
+    const loadData = async () => {
+      try {
+        setLoading(true);
+        const patientId = (user as any).patientId || user.id;
+        const [aptsRes, metricsRes, doctorsRes] = await Promise.all([
+          getAppointmentsByPatient(patientId),
+          getHealthMetrics(patientId),
+          getAllDoctors(),
+        ]);
+        setAppointments(aptsRes);
+        setHealthMetrics(metricsRes);
+        setDoctors(doctorsRes);
+      } catch (err) {
+        console.error("Error loading data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadData();
+  }, [user, setLocation]);
+
   // Get next appointment
   const nextAppointment = appointments.find(a => a.status === "upcoming");
 
@@ -18,7 +58,7 @@ export default function PatientDashboard() {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Patient Overview</h1>
-            <p className="text-muted-foreground">Welcome back, Alex. Here's your health summary.</p>
+            <p className="text-muted-foreground">Welcome back, {user?.fullName.split(" ")[0]}. Here's your health summary.</p>
           </div>
           <div className="flex items-center gap-3">
             <Button>Book Appointment</Button>
@@ -37,8 +77,12 @@ export default function PatientDashboard() {
               </div>
               <div>
                 <p className="text-blue-100 text-sm mb-1">Upcoming Appointment</p>
-                <h3 className="text-2xl font-bold tracking-tight truncate">Dr. Sarah Jenkins</h3>
-                <p className="text-blue-100 text-sm mt-1 opacity-90">Tomorrow, 10:00 AM</p>
+                <h3 className="text-2xl font-bold tracking-tight truncate">
+                  {nextAppointment ? `Appointment on ${new Date(nextAppointment.appointmentDate).toLocaleDateString()}` : "No upcoming appointments"}
+                </h3>
+                <p className="text-blue-100 text-sm mt-1 opacity-90">
+                  {nextAppointment ? new Date(nextAppointment.appointmentDate).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "Schedule your first visit"}
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -179,18 +223,18 @@ export default function PatientDashboard() {
 
         {/* Doctors Section */}
         <div className="mt-8">
-          <h2 className="text-xl font-bold mb-4">Your Care Team</h2>
+          <h2 className="text-xl font-bold mb-4">Available Doctors</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {[1, 2].map((i) => (
-              <Card key={i} className="hover:shadow-md transition-all cursor-pointer group">
+            {doctors.slice(0, 3).map((doctor, i) => (
+              <Card key={doctor.id} className="hover:shadow-md transition-all cursor-pointer group">
                 <CardContent className="p-4 flex items-center gap-4">
                   <Avatar className="h-14 w-14 border-2 border-border group-hover:border-primary transition-colors">
                     <AvatarImage src={`https://i.pravatar.cc/150?u=${i + 10}`} />
                     <AvatarFallback>DR</AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
-                    <h4 className="font-semibold text-sm">Dr. Sarah Jenkins</h4>
-                    <p className="text-xs text-muted-foreground">Cardiologist</p>
+                    <h4 className="font-semibold text-sm">{doctor.userId ? "Dr. " : "Loading..."}</h4>
+                    <p className="text-xs text-muted-foreground">{doctor.specialty}</p>
                     <div className="mt-2 flex gap-2">
                       <Button size="sm" variant="secondary" className="h-7 text-xs">Message</Button>
                       <Button size="sm" variant="outline" className="h-7 text-xs">Schedule</Button>

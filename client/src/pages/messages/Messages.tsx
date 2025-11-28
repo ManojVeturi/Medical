@@ -6,16 +6,21 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, Phone, Video, MoreVertical, Send, Paperclip, Smile } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useAuth } from "@/lib/auth";
+import { getMessages, createMessage, getAllDoctors } from "@/lib/api";
+import { useLocation } from "wouter";
+import { useToast } from "@/hooks/use-toast";
 
 export default function Messages() {
-  const [activeChat, setActiveChat] = useState("dr-sarah");
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+  const { toast } = useToast();
+  const [activeChat, setActiveChat] = useState("");
   const [messageInput, setMessageInput] = useState("");
-  const [messages, setMessages] = useState([
-    { id: 1, sender: "dr", content: "Hello Alex, how are you feeling after the medication change?", time: "10:00 AM" },
-    { id: 2, sender: "me", content: "Hi Dr. Jenkins. I'm feeling much better, thanks for asking. No side effects so far.", time: "10:05 AM" },
-    { id: 3, sender: "dr", content: "That's great news. Let's keep the dosage as is for now. Please schedule a follow-up in 2 weeks.", time: "10:10 AM" },
-  ]);
+  const [messages, setMessages] = useState<any[]>([]);
+  const [contacts, setContacts] = useState<any[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [activeChatName, setActiveChatName] = useState("");
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -23,24 +28,80 @@ export default function Messages() {
     }
   }, [messages]);
 
-  const handleSend = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!messageInput.trim()) return;
+  useEffect(() => {
+    if (!user) {
+      setLocation("/auth/login");
+      return;
+    }
     
-    setMessages([...messages, {
-      id: messages.length + 1,
-      sender: "me",
-      content: messageInput,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }]);
-    setMessageInput("");
-  };
+    const loadDoctors = async () => {
+      try {
+        const doctorsRes = await getAllDoctors();
+        const doctorContacts = doctorsRes.map((doc: any, idx: number) => ({
+          id: doc.id,
+          name: `Dr. ${doc.specialty}`,
+          role: doc.specialty,
+          online: Math.random() > 0.5,
+          img: `https://i.pravatar.cc/150?u=${idx + 20}`,
+          unread: 0,
+          lastMsg: "Click to start conversation",
+        }));
+        setContacts(doctorContacts);
+        if (doctorContacts.length > 0) {
+          setActiveChat(doctorContacts[0].id);
+          setActiveChatName(doctorContacts[0].name);
+        }
+      } catch (err) {
+        console.error("Error loading doctors:", err);
+      }
+    };
+    
+    loadDoctors();
+  }, [user, setLocation]);
 
-  const contacts = [
-    { id: "dr-sarah", name: "Dr. Sarah Jenkins", role: "Cardiologist", online: true, img: "https://i.pravatar.cc/150?u=12", unread: 0, lastMsg: "That's great news. Let's keep..." },
-    { id: "dr-mike", name: "Dr. Michael Chen", role: "Dermatologist", online: false, img: "https://i.pravatar.cc/150?u=22", unread: 2, lastMsg: "Please send the photos when you..." },
-    { id: "nurse-amy", name: "Nurse Amy", role: "Care Coordinator", online: true, img: "https://i.pravatar.cc/150?u=32", unread: 0, lastMsg: "Your appointment is confirmed." },
-  ];
+  useEffect(() => {
+    if (!activeChat || !user) return;
+    
+    const loadMessages = async () => {
+      try {
+        const messagesRes = await getMessages(user.id, activeChat);
+        setMessages(messagesRes.map((msg: any) => ({
+          id: msg.id,
+          sender: msg.senderId === user.id ? "me" : "dr",
+          content: msg.content,
+          time: new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        })));
+      } catch (err) {
+        console.error("Error loading messages:", err);
+      }
+    };
+    
+    loadMessages();
+  }, [activeChat, user]);
+
+  const handleSend = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!messageInput.trim() || !user) return;
+    
+    try {
+      await createMessage({
+        senderId: user.id,
+        receiverId: activeChat,
+        content: messageInput,
+        read: false
+      });
+      
+      setMessages([...messages, {
+        id: messages.length + 1,
+        sender: "me",
+        content: messageInput,
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      }]);
+      setMessageInput("");
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
 
   return (
     <DashboardLayout role="patient">
@@ -98,13 +159,13 @@ export default function Messages() {
           <div className="p-4 border-b border-border flex items-center justify-between bg-card/50 backdrop-blur-sm">
             <div className="flex items-center gap-3">
               <Avatar>
-                <AvatarImage src="https://i.pravatar.cc/150?u=12" />
-                <AvatarFallback>SJ</AvatarFallback>
+                <AvatarImage src={contacts.find((c: any) => c.id === activeChat)?.img || "https://i.pravatar.cc/150?u=12"} />
+                <AvatarFallback>{activeChatName.substring(0, 2)}</AvatarFallback>
               </Avatar>
               <div>
-                <h3 className="font-bold text-sm">Dr. Sarah Jenkins</h3>
+                <h3 className="font-bold text-sm">{activeChatName || "Select a contact"}</h3>
                 <p className="text-xs text-green-600 flex items-center gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-green-600"></span> Online
+                  <span className="h-1.5 w-1.5 rounded-full bg-green-600"></span> {contacts.find((c: any) => c.id === activeChat)?.online ? "Online" : "Offline"}
                 </p>
               </div>
             </div>

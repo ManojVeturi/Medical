@@ -3,51 +3,74 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Calendar as CalendarIcon, Clock, User, MapPin, Video, Phone, Plus } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/lib/auth";
+import { getAppointmentsByPatient, getAllDoctors, bookAppointment } from "@/lib/api";
+import { useLocation } from "wouter";
 
 export default function Appointments() {
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const { toast } = useToast();
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [upcomingAppointments, setUpcomingAppointments] = useState<any[]>([]);
+  const [doctors, setDoctors] = useState<any[]>([]);
+  const [selectedDoctor, setSelectedDoctor] = useState("");
+  const [appointmentDate, setAppointmentDate] = useState("");
+  const [appointmentType, setAppointmentType] = useState("Check-up");
 
-  const handleBook = () => {
-    setIsBookingOpen(false);
-    toast({
-      title: "Appointment Requested",
-      description: "Dr. Jenkins will review your request shortly.",
-    });
-  };
-
-  const upcomingAppointments = [
-    {
-      id: 1,
-      doctor: "Dr. Sarah Jenkins",
-      specialty: "Cardiologist",
-      date: "Today, Nov 28",
-      time: "10:00 AM",
-      type: "Follow-up",
-      mode: "In-person",
-      location: "Room 304, Main Wing",
-      avatar: "https://i.pravatar.cc/150?u=12"
-    },
-    {
-      id: 2,
-      doctor: "Dr. Michael Chen",
-      specialty: "Dermatologist",
-      date: "Tue, Dec 02",
-      time: "02:30 PM",
-      type: "Consultation",
-      mode: "Video Call",
-      location: "Online",
-      avatar: "https://i.pravatar.cc/150?u=22"
+  useEffect(() => {
+    if (!user) {
+      setLocation("/auth/login");
+      return;
     }
-  ];
+    
+    const loadData = async () => {
+      try {
+        const patientId = (user as any).patientId || user.id;
+        const [aptsRes, doctorsRes] = await Promise.all([
+          getAppointmentsByPatient(patientId),
+          getAllDoctors(),
+        ]);
+        setUpcomingAppointments(aptsRes.filter((a: any) => a.status === "upcoming"));
+        setDoctors(doctorsRes);
+      } catch (err) {
+        console.error("Error loading data:", err);
+      }
+    };
+    
+    loadData();
+  }, [user, setLocation]);
+
+  const handleBook = async () => {
+    try {
+      if (!selectedDoctor || !appointmentDate) {
+        toast({ title: "Error", description: "Please fill all fields", variant: "destructive" });
+        return;
+      }
+      const patientId = (user as any).patientId || user.id;
+      await bookAppointment({
+        patientId,
+        doctorId: selectedDoctor,
+        appointmentDate: new Date(appointmentDate),
+        type: appointmentType,
+        status: "upcoming"
+      });
+      toast({ title: "Success", description: "Appointment booked successfully!" });
+      setIsBookingOpen(false);
+      setSelectedDoctor("");
+      setAppointmentDate("");
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    }
+  };
 
   return (
     <DashboardLayout role="patient">
@@ -70,43 +93,32 @@ export default function Appointments() {
               </DialogHeader>
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
-                  <Label>Department</Label>
-                  <Select>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="cardiology">Cardiology</SelectItem>
-                      <SelectItem value="dermatology">Dermatology</SelectItem>
-                      <SelectItem value="general">General Practice</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
                   <Label>Doctor</Label>
-                  <Select>
+                  <Select value={selectedDoctor} onValueChange={setSelectedDoctor}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select doctor" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="sarah">Dr. Sarah Jenkins</SelectItem>
-                      <SelectItem value="michael">Dr. Michael Chen</SelectItem>
+                      {doctors.map((doc) => (
+                        <SelectItem key={doc.id} value={doc.id}>{doc.specialty}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
                   <Label>Date</Label>
-                  <Input type="date" />
+                  <Input type="datetime-local" value={appointmentDate} onChange={(e) => setAppointmentDate(e.target.value)} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Time Preference</Label>
-                  <Select>
+                  <Label>Appointment Type</Label>
+                  <Select value={appointmentType} onValueChange={setAppointmentType}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select time" />
+                      <SelectValue placeholder="Select type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="morning">Morning (9AM - 12PM)</SelectItem>
-                      <SelectItem value="afternoon">Afternoon (1PM - 5PM)</SelectItem>
+                      <SelectItem value="Check-up">Check-up</SelectItem>
+                      <SelectItem value="Consultation">Consultation</SelectItem>
+                      <SelectItem value="Follow-up">Follow-up</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

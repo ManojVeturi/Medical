@@ -6,46 +6,37 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useAuth } from "@/lib/auth";
+import { useEffect, useState } from "react";
+import { getMedicalRecords } from "@/lib/api";
+import { useLocation } from "wouter";
 
 export default function MedicalRecords() {
-  const records = [
-    {
-      id: "REC-001",
-      name: "Annual Physical Examination",
-      date: "Nov 15, 2024",
-      doctor: "Dr. Sarah Jenkins",
-      type: "Report",
-      size: "2.4 MB",
-      tags: ["General", "Checkup"]
-    },
-    {
-      id: "LAB-023",
-      name: "Blood Chemistry Panel",
-      date: "Nov 14, 2024",
-      doctor: "Lab Corp",
-      type: "Lab Result",
-      size: "1.1 MB",
-      tags: ["Bloodwork"]
-    },
-    {
-      id: "IMG-089",
-      name: "Chest X-Ray Results",
-      date: "Oct 02, 2024",
-      doctor: "Radiology Dept",
-      type: "Imaging",
-      size: "15.8 MB",
-      tags: ["X-Ray"]
-    },
-    {
-      id: "RX-044",
-      name: "Prescription - Amoxicillin",
-      date: "Sep 20, 2024",
-      doctor: "Dr. Michael Chen",
-      type: "Prescription",
-      size: "0.5 MB",
-      tags: ["Medication"]
+  const { user } = useAuth();
+  const [, setLocation] = useLocation();
+  const [records, setRecords] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) {
+      setLocation("/auth/login");
+      return;
     }
-  ];
+    
+    const loadData = async () => {
+      try {
+        const patientId = (user as any).patientId || user.id;
+        const recordsRes = await getMedicalRecords(patientId);
+        setRecords(recordsRes);
+      } catch (err) {
+        console.error("Error loading records:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    loadData();
+  }, [user, setLocation]);
 
   return (
     <DashboardLayout role="patient">
@@ -99,38 +90,48 @@ export default function MedicalRecords() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {records.map((record) => (
-                      <TableRow key={record.id}>
-                        <TableCell className="font-medium">
-                          <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
-                              <FileText className="h-5 w-5" />
-                            </div>
-                            <div>
-                              <p>{record.name}</p>
-                              <p className="text-xs text-muted-foreground">{record.size}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{record.date}</TableCell>
-                        <TableCell>{record.doctor}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary" className="font-normal">
-                            {record.type}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <div className="flex justify-end gap-2">
-                            <Button variant="ghost" size="icon">
-                              <Eye className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                            <Button variant="ghost" size="icon">
-                              <Download className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                          </div>
+                    {records.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={5} className="text-center py-8 text-muted-foreground">
+                          No medical records found
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      records.map((record) => (
+                        <TableRow key={record.id}>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 bg-primary/10 text-primary rounded-lg flex items-center justify-center">
+                                <FileText className="h-5 w-5" />
+                              </div>
+                              <div>
+                                <p>{record.title}</p>
+                                <p className="text-xs text-muted-foreground">{record.fileUrl ? "File attached" : "No file"}</p>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>{new Date(record.createdAt).toLocaleDateString()}</TableCell>
+                          <TableCell>{record.doctorId ? "Your Doctor" : "System"}</TableCell>
+                          <TableCell>
+                            <Badge variant="secondary" className="font-normal">
+                              {record.type}
+                            </Badge>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <div className="flex justify-end gap-2">
+                              <Button variant="ghost" size="icon">
+                                <Eye className="h-4 w-4 text-muted-foreground" />
+                              </Button>
+                              {record.fileUrl && (
+                                <Button variant="ghost" size="icon">
+                                  <Download className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </CardContent>

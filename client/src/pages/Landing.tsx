@@ -55,9 +55,11 @@ export default function Landing() {
                   Start Your Journey <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
+            <Link href="/auth/login">
               <Button variant="outline" size="lg" className="h-12 px-8 text-base">
                 View Demo
               </Button>
+            </Link>
             </div>
             
             <div className="pt-8 flex items-center gap-8 text-sm text-muted-foreground">
